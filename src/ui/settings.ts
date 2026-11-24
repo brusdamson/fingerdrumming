@@ -48,6 +48,18 @@ export async function settingsScreen(): Promise<Screen> {
     };
   };
 
+  // Монитор: видно, доходит ли вообще сигнал от контроллера и какие ноты он шлёт.
+  const monitor = h('p', { class: 'monitor' });
+  const renderMonitor = () => {
+    const l = app.midi.last;
+    monitor.textContent = l
+      ? `Монитор: ${l.port} → ${l.text} (всего сообщений: ${app.midi.messageCount})`
+      : 'Монитор: сообщений от контроллера пока не было. Ударь по пэду — здесь должна появиться нота.';
+    monitor.classList.toggle('live', !!l);
+  };
+  renderMonitor();
+  app.onMidiActivity = renderMonitor;
+
   function renderMidi(): void {
     clear(midiBox);
     const m = app.midi;
@@ -55,10 +67,16 @@ export async function settingsScreen(): Promise<Screen> {
       m.status === 'unsupported' ? 'Этот браузер не поддерживает Web MIDI — нужен Chrome.'
         : m.status === 'denied' ? 'Доступ к MIDI запрещён. Разреши его в настройках сайта (значок слева от адреса) и перезагрузи страницу.'
           : m.status === 'none' ? 'Контроллер не найден. Подключи MPD218 по USB — он появится сам.'
-            : 'Подключено: ' + (m.current?.name ?? '');
+            : 'Найдено: ' + m.inputs.map((i) => i.name ?? i.id).join(', ') + '. Сигнал принимается со всех входов, если не выбран один.';
+    const busy = m.inputs.filter((i) => m.failed.has(i.id));
     const parts: (Node | null)[] = [
       h('h2', null, 'MIDI-контроллер'),
       h('p', null, statusText),
+      busy.length
+        ? h('p', { class: 'error' }, 'Не удалось открыть: ', busy.map((i) => i.name ?? i.id).join(', '),
+            '. В Windows MIDI-порт может держать только одна программа — закрой DAW (Ableton, FL Studio), MPD218 Editor и другие вкладки с MIDI, затем нажми «Переподключить».')
+        : null,
+      monitor,
       m.inputs.length
         ? h('div', { class: 'controls' },
             h('span', { class: 'label' }, 'Вход'),
@@ -70,8 +88,11 @@ export async function settingsScreen(): Promise<Screen> {
                 app.settings.midiInputId = id;
                 app.save();
               },
-            }, m.inputs.map((i) => h('option', { value: i.id, selected: i.id === m.current?.id }, i.name ?? i.id))))
-        : null,
+            }, h('option', { value: '', selected: !m.selectedId }, 'Все входы'),
+              m.inputs.map((i) => h('option', { value: i.id, selected: i.id === m.selectedId }, i.name ?? i.id))),
+            h('button', { class: 'btn', type: 'button', onclick: () => void app.midi.retry() }, 'Переподключить'))
+        : h('div', { class: 'controls' },
+            h('button', { class: 'btn', type: 'button', onclick: () => void app.midi.retry() }, 'Переподключить')),
       h('p', { class: 'hint' }, 'Ноты пэдов 1–16: ', app.settings.padNotes.join(', '),
         '. По умолчанию — 36–51 (банк A заводского пресета MPD218). Если пэды звучат не на своих местах или молчат — обучи раскладку.'),
       h('div', { class: 'controls' },
@@ -227,6 +248,7 @@ export async function settingsScreen(): Promise<Screen> {
     destroy: () => {
       stopLearn();
       app.onMidiChange = null;
+      app.onMidiActivity = null;
       clearInterval(latTimer);
     },
   };

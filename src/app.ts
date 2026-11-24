@@ -46,6 +46,10 @@ export class App {
   onMidiChange: (() => void) | null = null;
   /** Текущая сессия урока — только для отладки и автопроверок из консоли. */
   debugSession: unknown = null;
+  /** Любое MIDI-сообщение (монитор в настройках). */
+  onMidiActivity: (() => void) | null = null;
+  private toastEl: HTMLElement | null = null;
+  private toastTimer: number | undefined;
 
   private kits = new Map<string, LoadedKit>();
   private screen: Screen | null = null;
@@ -125,6 +129,24 @@ export class App {
       }
       const idx = this.settings.padNotes.indexOf(note);
       if (idx >= 0) this.pad(idx + 1, velocity, ts);
+      else {
+        // Сигнал пришёл, но нота не назначена ни одному пэду — говорим об этом прямо, а не молчим.
+        this.toast(
+          `Контроллер прислал ноту ${note}, но она не назначена ни одному пэду (ждём ${this.settings.padNotes[0]}–${this.settings.padNotes[15]}).`,
+          'Обучить пэды',
+          () => this.open('settings'),
+        );
+      }
+    };
+    let pillTimer: number | undefined;
+    this.midi.onActivity = () => {
+      this.onMidiActivity?.();
+      if (pillTimer === undefined) {
+        pillTimer = window.setTimeout(() => {
+          pillTimer = undefined;
+          this.renderMidi();
+        }, 120);
+      }
     };
     // MIDI не блокирует запуск: без контроллера работает клавиатура.
     void this.midi.init(this.settings.midiInputId);
@@ -147,6 +169,8 @@ export class App {
 
   /** Центральная точка ввода: сначала звук (минимум задержки), потом логика экрана. */
   pad(pad: number, velocity: number, timeStamp: number): void {
+    // Chrome может усыпить AudioContext (долгий простой, смена устройства) — будим его ударом.
+    if (this.engine.ctx.state !== 'running') void this.engine.resume();
     if (!this.screen?.silentPads?.()) this.engine.trigger(pad, velocity);
     this.screen?.onPad?.(pad, velocity, timeStamp);
   }
@@ -235,18 +259,48 @@ export class App {
     }
   }
 
+  /** Всплывающая подсказка внизу экрана с необязательной кнопкой действия. */
+  toast(text: string, actionLabel?: string, action?: () => void): void {
+    this.toastEl?.remove();
+    const el = h(
+      'div',
+      { class: 'toast' },
+      h('span', null, text),
+      actionLabel && action
+        ? h('button', {
+            class: 'btn btn-primary', type: 'button',
+            onclick: () => {
+              el.remove();
+              action();
+            },
+          }, actionLabel)
+        : null,
+      h('button', { class: 'btn btn-ghost', type: 'button', onclick: () => el.remove() }, '✕'),
+    );
+    document.body.append(el);
+    this.toastEl = el;
+    clearTimeout(this.toastTimer);
+    this.toastTimer = window.setTimeout(() => el.remove(), 12000);
+  }
+
   private renderMidi(): void {
     const m = this.midi;
+    const names = m.inputs.map((i) => i.name ?? 'MIDI').join(', ');
+    const busy = m.inputs.length > 0 && m.inputs.every((i) => m.failed.has(i.id));
+    const fresh = m.last && performance.now() - m.last.at < 1500 ? ' · ' + m.last.text : '';
     const text =
-      m.status === 'connected'
-        ? '● ' + (m.current?.name ?? 'MIDI')
+      busy
+        ? '⚠ ' + names + ': порт занят'
+        : m.status === 'connected'
+        ? '● ' + names + fresh
         : m.status === 'unsupported'
           ? 'MIDI не поддерживается'
           : m.status === 'denied'
             ? 'MIDI: нет разрешения'
             : '○ контроллер не найден';
     this.midiPill.textContent = text;
-    this.midiPill.className = 'pill ' + (m.status === 'connected' ? 'pill-ok' : 'pill-warn');
+    this.midiPill.className = 'pill ' + (m.status === 'connected' && !busy ? 'pill-ok' : 'pill-warn');
+    if (fresh) window.setTimeout(() => this.renderMidi(), 1600);
   }
 }
 
