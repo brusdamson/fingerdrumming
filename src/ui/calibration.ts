@@ -25,7 +25,7 @@ export function summarize(deltasMs: number[]): Measure {
 }
 
 export async function calibrationScreen(): Promise<Screen> {
-  app.engine.setKit(await app.kit('dnb'));
+  app.engine.setKit(await app.kit(app.lessonKitId()));
 
   const body = h('div', { class: 'calib-body' });
   const el = h('div', { class: 'calib' }, h('h1', null, 'Калибровка'), body);

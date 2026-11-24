@@ -4,7 +4,7 @@ import { clear, h } from '../util/dom';
 import { PadGrid } from './padGrid';
 
 export async function settingsScreen(): Promise<Screen> {
-  const kit = await app.kit('dnb');
+  const kit = await app.kit(app.lessonKitId());
   app.engine.setKit(kit);
   const el = h('div', { class: 'settings' }, h('h1', null, 'Настройки'));
 

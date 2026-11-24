@@ -1,13 +1,23 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { OffsetEstimator } from '../src/audio/clock';
 import { parseLesson, stepDuration } from '../src/game/pattern';
 import { LESSONS } from '../src/lessons';
 
-const dnb = JSON.parse(readFileSync('public/kits/dnb/kit.json', 'utf8')) as {
+interface KitFile {
+  id: string;
+  type: string;
   pads: { pad: number; sound: string; layers: { files: string[] }[] }[];
-};
-const amen = JSON.parse(readFileSync('public/kits/amen/kit.json', 'utf8')) as { pick: number[] };
+}
+const read = <T>(path: string): T => JSON.parse(readFileSync(path, 'utf8')) as T;
+const index = read<{ id: string; kind: string; requires?: string }[]>('public/kits/index.json');
+const oneshotKits = index.filter((k) => k.kind === 'oneshot').map((k) => ({
+  ...k,
+  kit: read<KitFile>(`public/kits/${k.id}/kit.json`),
+}));
+const amen = read<{ pick: number[] }>('public/kits/amen/kit.json');
+// Сэмплы SampleRadar не лежат в git — проверяем их файлы, только если они скачаны.
+const haveSampleRadar = existsSync('public/kits/sampleradar');
 
 describe('уроки', () => {
   it('id уникальны', () => {
@@ -24,7 +34,10 @@ describe('уроки', () => {
       expect(l.repeats).toBeGreaterThan(0);
       for (const sound of Object.keys(l.tracks)) {
         if (l.kit === 'dnb') {
-          expect(dnb.pads.some((p) => p.sound === sound), `нет звука ${sound}`).toBe(true);
+          // урок должен играться на любом one-shot ките из списка
+          for (const k of oneshotKits) {
+            expect(k.kit.pads.some((p) => p.sound === sound), `в ките ${k.id} нет звука ${sound}`).toBe(true);
+          }
         } else {
           const m = /^s(\d+)$/.exec(sound);
           expect(m, `звук ${sound} — не слайс`).not.toBeNull();
@@ -34,13 +47,21 @@ describe('уроки', () => {
     });
   }
 
-  it('DnB-кит: 16 пэдов, файлы существуют', () => {
-    expect(dnb.pads.map((p) => p.pad).sort((a, b) => a - b)).toEqual(Array.from({ length: 16 }, (_, i) => i + 1));
-    for (const p of dnb.pads) {
-      for (const layer of p.layers) {
-        for (const f of layer.files) expect(() => readFileSync('public/kits/dnb/' + f)).not.toThrow();
+  for (const k of oneshotKits) {
+    it(`кит ${k.id}: 16 пэдов, файлы существуют`, () => {
+      expect(k.kit.id).toBe(k.id);
+      expect(k.kit.pads.map((p) => p.pad).sort((a, b) => a - b)).toEqual(Array.from({ length: 16 }, (_, i) => i + 1));
+      if (k.requires === 'sampleradar' && !haveSampleRadar) return;
+      for (const p of k.kit.pads) {
+        for (const layer of p.layers) {
+          expect(layer.files.length).toBeGreaterThan(0);
+          for (const f of layer.files) expect(existsSync(`public/kits/${k.id}/${f}`), f).toBe(true);
+        }
       }
-    }
+    });
+  }
+
+  it('amen: 16 слайсов', () => {
     expect(amen.pick.length).toBe(16);
   });
 

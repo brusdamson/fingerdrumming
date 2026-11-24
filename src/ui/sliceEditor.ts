@@ -330,7 +330,7 @@ export async function sliceEditorScreen(): Promise<Screen> {
             onclick: async () => {
               await deleteStoredKit(k.id);
               app.forgetKit(k.id);
-              if (app.settings.freeKit === k.id) app.settings.freeKit = 'dnb';
+              if (app.settings.freeKit === k.id) app.settings.freeKit = '';
               if (app.settings.sliceKit === k.id) app.settings.sliceKit = 'amen';
               app.save();
               await app.refreshUserKits();

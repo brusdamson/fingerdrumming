@@ -18,6 +18,10 @@ export interface Settings {
   offsets: Record<string, Offsets>;
   freeKit: string;
   sliceKit: string;
+  /** Кит для уроков на one-shot звуках; пусто — первый доступный. */
+  lessonKit: string;
+  /** Замены звуков: кит → звук → файл из пула сэмплов. */
+  soundOverrides: Record<string, Record<string, string>>;
 }
 
 export function defaultPadNotes(): number[] {
@@ -32,8 +36,10 @@ function defaults(): Settings {
     metronome: true,
     sinkId: '',
     offsets: {},
-    freeKit: 'dnb',
+    freeKit: '',
     sliceKit: 'amen',
+    lessonKit: '',
+    soundOverrides: {},
   };
 }
 

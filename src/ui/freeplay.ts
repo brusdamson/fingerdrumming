@@ -3,7 +3,7 @@ import { h } from '../util/dom';
 import { PadGrid } from './padGrid';
 
 export async function freeplayScreen(): Promise<Screen> {
-  let kit = await app.kit(app.settings.freeKit).catch(() => app.kit('dnb'));
+  let kit = await app.kit(app.settings.freeKit || app.lessonKitId()).catch(() => app.kit(app.lessonKitId()));
   app.engine.setKit(kit);
 
   const padGrid = new PadGrid((pad, vel, ts) => app.pad(pad, vel, ts));

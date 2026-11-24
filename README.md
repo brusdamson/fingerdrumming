@@ -83,8 +83,34 @@ npm run dev
 на волне (перетаскивание, двойной клик — добавить, правый клик — удалить). Первые 16 слайсов ложатся
 на пэды 1–16. Кит сохраняется в браузере (IndexedDB) и доступен в свободной игре и в уроках чопа.
 
+## Киты и подбор звуков
+
+В каждом уроке рядом с темпом есть список **«Кит»** — им звучат пэды во всех уроках:
+
+- **DnB, DnB 2, Jungle, Jungle 2, Jump Up (SampleRadar)** — обработанные электронные хиты из DnB-пака SampleRadar;
+- **Breakbeat-кит** и **Студийный DnB-кит** (fingerdrum.io) — живые барабаны со слоями по силе удара.
+
+Кнопка **«Звуки…»** открывает замену отдельных звуков: для кика, снейра, хэта, райда и крэша можно выбрать
+любой сэмпл из пака (42 кика, 42 снейра, 26 хэтов, 23 тарелки) — он сразу прозвучит. Выбор запоминается для кита.
+
+Сэмплы SampleRadar нельзя распространять, поэтому в репозитории их нет. После клонирования выполни:
+
+```
+npm run samples
+```
+
+Скрипт скачает пак (≈250 МБ) с MusicRadar и положит нужные хиты в `public/kits/sampleradar`.
+Без них приложение работает на китах fingerdrum.io.
+
+Манифесты китов генерирует `python scripts/build-kits.py` — состав готовых китов SampleRadar задаётся там.
+
 ## Сэмплы и лицензии
 
+- `public/kits/sampleradar` (не в git) — хиты из **SampleRadar: drum 'n' bass essentials**
+  ([MusicRadar](https://www.musicradar.com/news/sampleradar-drum-and-bass-essentials-samples), Future Music).
+  Royalty-free для своей музыки, перераспространять нельзя.
+- `public/kits/breakbeat` — **Breakbeat kit** с fingerdrum.io: DRSKit (CC BY 4.0), Virtuosity Drums и VCSL (CC0 1.0);
+  авторы — в `public/kits/breakbeat/README.txt`.
 - `public/kits/dnb` — **Drum & bass kit** с [fingerdrum.io](https://fingerdrum.io/sample-kits) (Re: TUNES).
   Сэмплы из DRSKit (CC BY 4.0), VCSL и набора TR-808 Майкла Фишера (CC0 1.0).
   Авторы и ссылки — в `public/kits/dnb/README.txt`, файл нужно сохранять рядом с сэмплами.

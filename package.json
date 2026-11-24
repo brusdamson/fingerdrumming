@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "samples": "node scripts/fetch-samples.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

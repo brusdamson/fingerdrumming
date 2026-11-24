@@ -6,12 +6,15 @@ import { Session, type Mode } from '../game/session';
 import { LESSONS } from '../lessons';
 import { saveProgress } from '../storage/settings';
 import { clear, fmtMs, h } from '../util/dom';
+import { poolFilesFor, sampleLabel } from '../audio/kit';
 import { PadGrid } from './padGrid';
 import { resultsPanel } from './results';
 
 export async function lessonScreen(lesson: Lesson): Promise<Screen> {
-  const kitId = lesson.kit === 'dnb' ? 'dnb' : app.settings.sliceKit;
-  let kit = await app.kit(kitId).catch(() => app.kit('amen'));
+  const oneshot = lesson.kit === 'dnb';
+  let kit = await (oneshot
+    ? app.kit(app.lessonKitId()).catch(() => app.kit('dnb'))
+    : app.kit(app.sliceKitId()).catch(() => app.kit('amen')));
   app.engine.setKit(kit);
 
   const sounds = Object.keys(lesson.tracks);
@@ -83,26 +86,90 @@ export async function lessonScreen(lesson: Lesson): Promise<Screen> {
     ),
   );
 
-  const kitSelect =
-    lesson.kit === 'slices'
+  /** Применить (заново загруженный) кит ко всему экрану урока. */
+  const useKit = async (id: string): Promise<void> => {
+    kit = await app.kit(id);
+    app.engine.setKit(kit);
+    padGrid.setKit(kit, used);
+    renderer.setLanes(buildLanes());
+  };
+
+  const kitSelect = h(
+    'select',
+    {
+      class: 'input',
+      title: 'Кит, которым звучат пэды в уроках',
+      onchange: async (e: Event) => {
+        stop();
+        const id = (e.target as HTMLSelectElement).value;
+        if (oneshot) app.settings.lessonKit = id;
+        else app.settings.sliceKit = id;
+        app.save();
+        await useKit(id);
+        renderSounds();
+      },
+    },
+    app.kitChoices(oneshot ? 'oneshot' : 'slices').map((k) =>
+      h('option', { value: k.id, selected: k.id === kit.id }, k.name),
+    ),
+  );
+
+  // Замена отдельных звуков кита сэмплами из пула — с прослушиванием при выборе.
+  const soundsPanel = h('div', { class: 'sounds-panel', hidden: true });
+  const soundsBtn =
+    oneshot && app.pool
       ? h(
-          'select',
+          'button',
           {
-            class: 'input',
-            onchange: async (e: Event) => {
-              stop();
-              const id = (e.target as HTMLSelectElement).value;
-              kit = await app.kit(id);
-              app.settings.sliceKit = id;
-              app.save();
-              app.engine.setKit(kit);
-              padGrid.setKit(kit, used);
-              renderer.setLanes(buildLanes());
+            class: 'btn',
+            type: 'button',
+            onclick: () => {
+              soundsPanel.hidden = !soundsPanel.hidden;
+              renderSounds();
             },
           },
-          app.kitChoices(true).map((k) => h('option', { value: k.id, selected: k.id === kit.id }, k.name)),
+          'Звуки…',
         )
       : null;
+
+  function renderSounds(): void {
+    clear(soundsPanel);
+    if (soundsPanel.hidden || !oneshot || !app.pool) return;
+    const current = app.settings.soundOverrides[kit.id] ?? {};
+    soundsPanel.append(
+      h('p', { class: 'hint' },
+        'Подбери звуки на слух: выбери сэмпл — он сразу прозвучит (стрелки ↑↓ листают список). Выбор запоминается для этого кита.'),
+    );
+    for (const sound of sounds) {
+      const files = poolFilesFor(app.pool, sound);
+      if (!files.length) continue;
+      const lane = buildLanes().find((l) => l.sound === sound);
+      const select = h(
+        'select',
+        {
+          class: 'input',
+          onchange: async () => {
+            stop();
+            app.setSoundOverride(kit.id, sound, select.value || null);
+            await useKit(kit.id);
+            app.engine.playSound(sound, 110);
+          },
+        },
+        h('option', { value: '', selected: !current[sound] }, '— как в ките —'),
+        files.map((f) => h('option', { value: f, selected: current[sound] === f }, sampleLabel(f))),
+      );
+      soundsPanel.append(
+        h('label', { class: 'sound-row' },
+          h('span', { class: 'sound-name', style: `border-color:${lane?.color ?? '#666'}` }, lane?.label ?? sound),
+          select,
+          h('button', { class: 'btn btn-ghost', type: 'button', title: 'Прослушать', onclick: (e: Event) => {
+            e.preventDefault();
+            app.engine.playSound(sound, 110);
+          } }, '▶'),
+        ),
+      );
+    }
+  }
 
   const idx = LESSONS.indexOf(lesson);
   const nextLesson = LESSONS[idx + 1];
@@ -117,7 +184,9 @@ export async function lessonScreen(lesson: Lesson): Promise<Screen> {
       h('div', null, h('div', { class: 'crumb' }, lesson.group), h('h1', null, lesson.title)),
     ),
     h('p', { class: 'lesson-text' }, lesson.text),
-    h('div', { class: 'tempo-line' }, h('span', { class: 'label' }, 'Темп'), tempoRow, customBpm, h('span', { class: 'label' }, 'BPM'), kitSelect),
+    h('div', { class: 'tempo-line' }, h('span', { class: 'label' }, 'Темп'), tempoRow, customBpm, h('span', { class: 'label' }, 'BPM'),
+      h('span', { class: 'label kit-label' }, 'Кит'), kitSelect, soundsBtn),
+    soundsPanel,
     controls,
     h('div', { class: 'stage-wrap' }, canvas, overlay),
     h('div', { class: 'under' }, h('div', { class: 'hud-col' }, hud, status), padGrid.el),

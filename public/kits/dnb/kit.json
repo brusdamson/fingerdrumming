@@ -1,60 +1,289 @@
 {
-  "id": "dnb",
-  "name": "DnB-кит (one-shot)",
-  "type": "oneshot",
-  "pads": [
-    { "pad": 1, "sound": "kick", "name": "Kick", "color": "#ff5a3c",
-      "layers": [
-        { "upTo": 70, "files": ["Kick/kick_soft_1.wav", "Kick/kick_soft_2.wav"] },
-        { "upTo": 127, "files": ["Kick/kick_hard_1.wav", "Kick/kick_hard_2.wav"] }
-      ] },
-    { "pad": 2, "sound": "snare", "name": "Snare", "color": "#ffc23c",
-      "layers": [
-        { "upTo": 70, "files": ["Snare/snare_soft_1.wav", "Snare/snare_soft_2.wav"] },
-        { "upTo": 127, "files": ["Snare/snare_hard_1.wav", "Snare/snare_hard_2.wav"] }
-      ] },
-    { "pad": 3, "sound": "snare", "name": "Snare", "color": "#ffc23c",
-      "layers": [
-        { "upTo": 70, "files": ["Snare/snare_soft_2.wav", "Snare/snare_soft_1.wav"] },
-        { "upTo": 127, "files": ["Snare/snare_hard_2.wav", "Snare/snare_hard_1.wav"] }
-      ] },
-    { "pad": 4, "sound": "kick", "name": "Kick", "color": "#ff5a3c",
-      "layers": [
-        { "upTo": 70, "files": ["Kick/kick_soft_2.wav", "Kick/kick_soft_1.wav"] },
-        { "upTo": 127, "files": ["Kick/kick_hard_2.wav", "Kick/kick_hard_1.wav"] }
-      ] },
-
-    { "pad": 5, "sound": "hat", "name": "Hat", "color": "#3cd6ff", "choke": "hh",
-      "layers": [
-        { "upTo": 70, "files": ["Hi-hat/hi-hat_soft_1.wav", "Hi-hat/hi-hat_soft_2.wav"] },
-        { "upTo": 127, "files": ["Hi-hat/hi-hat_hard_1.wav", "Hi-hat/hi-hat_hard_2.wav"] }
-      ] },
-    { "pad": 6, "sound": "rim", "name": "Rim", "color": "#ffe9a8",
-      "layers": [{ "upTo": 127, "files": ["Rim/rim_1.wav", "Rim/rim_2.wav"] }] },
-    { "pad": 7, "sound": "clap", "name": "Clap", "color": "#ff8fd0",
-      "layers": [{ "upTo": 127, "files": ["Clap/clap_1.wav"] }] },
-    { "pad": 8, "sound": "hat", "name": "Hat", "color": "#3cd6ff", "choke": "hh",
-      "layers": [
-        { "upTo": 70, "files": ["Hi-hat/hi-hat_soft_2.wav", "Hi-hat/hi-hat_soft_1.wav"] },
-        { "upTo": 127, "files": ["Hi-hat/hi-hat_hard_2.wav", "Hi-hat/hi-hat_hard_1.wav"] }
-      ] },
-
-    { "pad": 9, "sound": "openhat", "name": "Open hat", "color": "#6fa8ff", "choke": "hh",
-      "layers": [{ "upTo": 127, "files": ["Hi-hat_open/hi-hat-open_1.wav", "Hi-hat_open/hi-hat-open_2.wav"] }] },
-    { "pad": 10, "sound": "ride", "name": "Ride", "color": "#7dffb0",
-      "layers": [{ "upTo": 127, "files": ["Ride/ride_1.wav", "Ride/ride_2.wav"] }] },
-    { "pad": 11, "sound": "crash", "name": "Crash", "color": "#c79bff",
-      "layers": [{ "upTo": 127, "files": ["Crash/crash_1.wav", "Crash/crash_2.wav"] }] },
-    { "pad": 12, "sound": "bell", "name": "Ride bell", "color": "#a9ffd8",
-      "layers": [{ "upTo": 127, "files": ["Ride_bell/ride-bell_1.wav", "Ride_bell/ride-bell_2.wav"] }] },
-
-    { "pad": 13, "sound": "tomlow", "name": "Tom low", "color": "#ff9a6b",
-      "layers": [{ "upTo": 127, "files": ["Floor_tom/floor-tom_1.wav", "Floor_tom/floor-tom_2.wav"] }] },
-    { "pad": 14, "sound": "tommid", "name": "Tom mid", "color": "#ff9a6b",
-      "layers": [{ "upTo": 127, "files": ["Tom_mid/tom-mid_1.wav"] }] },
-    { "pad": 15, "sound": "tomhigh", "name": "Tom high", "color": "#ff9a6b",
-      "layers": [{ "upTo": 127, "files": ["Tom_high/tom-high_1.wav"] }] },
-    { "pad": 16, "sound": "shaker", "name": "Shaker", "color": "#d8d8d8",
-      "layers": [{ "upTo": 127, "files": ["Shaker/shaker_1.wav", "Shaker/shaker_2.wav"] }] }
-  ]
+ "id": "dnb",
+ "name": "Студийный DnB-кит (fingerdrum.io)",
+ "type": "oneshot",
+ "pads": [
+  {
+   "pad": 1,
+   "sound": "kick",
+   "name": "Kick",
+   "color": "#ff5a3c",
+   "layers": [
+    {
+     "upTo": 70,
+     "files": [
+      "Kick/kick_soft_1.wav",
+      "Kick/kick_soft_2.wav"
+     ]
+    },
+    {
+     "upTo": 127,
+     "files": [
+      "Kick/kick_hard_1.wav",
+      "Kick/kick_hard_2.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 2,
+   "sound": "snare",
+   "name": "Snare",
+   "color": "#ffc23c",
+   "layers": [
+    {
+     "upTo": 70,
+     "files": [
+      "Snare/snare_soft_1.wav",
+      "Snare/snare_soft_2.wav"
+     ]
+    },
+    {
+     "upTo": 127,
+     "files": [
+      "Snare/snare_hard_1.wav",
+      "Snare/snare_hard_2.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 3,
+   "sound": "snare",
+   "name": "Snare",
+   "color": "#ffc23c",
+   "layers": [
+    {
+     "upTo": 70,
+     "files": [
+      "Snare/snare_soft_2.wav",
+      "Snare/snare_soft_1.wav"
+     ]
+    },
+    {
+     "upTo": 127,
+     "files": [
+      "Snare/snare_hard_2.wav",
+      "Snare/snare_hard_1.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 4,
+   "sound": "kick",
+   "name": "Kick",
+   "color": "#ff5a3c",
+   "layers": [
+    {
+     "upTo": 70,
+     "files": [
+      "Kick/kick_soft_2.wav",
+      "Kick/kick_soft_1.wav"
+     ]
+    },
+    {
+     "upTo": 127,
+     "files": [
+      "Kick/kick_hard_2.wav",
+      "Kick/kick_hard_1.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 5,
+   "sound": "hat",
+   "name": "Hat",
+   "color": "#3cd6ff",
+   "choke": "hh",
+   "layers": [
+    {
+     "upTo": 70,
+     "files": [
+      "Hi-hat/hi-hat_soft_1.wav",
+      "Hi-hat/hi-hat_soft_2.wav"
+     ]
+    },
+    {
+     "upTo": 127,
+     "files": [
+      "Hi-hat/hi-hat_hard_1.wav",
+      "Hi-hat/hi-hat_hard_2.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 6,
+   "sound": "rim",
+   "name": "Rim",
+   "color": "#ffe9a8",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Rim/rim_1.wav",
+      "Rim/rim_2.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 7,
+   "sound": "clap",
+   "name": "Clap",
+   "color": "#ff8fd0",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Clap/clap_1.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 8,
+   "sound": "hat",
+   "name": "Hat",
+   "color": "#3cd6ff",
+   "choke": "hh",
+   "layers": [
+    {
+     "upTo": 70,
+     "files": [
+      "Hi-hat/hi-hat_soft_2.wav",
+      "Hi-hat/hi-hat_soft_1.wav"
+     ]
+    },
+    {
+     "upTo": 127,
+     "files": [
+      "Hi-hat/hi-hat_hard_2.wav",
+      "Hi-hat/hi-hat_hard_1.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 9,
+   "sound": "openhat",
+   "name": "Open hat",
+   "color": "#6fa8ff",
+   "choke": "hh",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Hi-hat_open/hi-hat-open_1.wav",
+      "Hi-hat_open/hi-hat-open_2.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 10,
+   "sound": "ride",
+   "name": "Ride",
+   "color": "#7dffb0",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Ride/ride_1.wav",
+      "Ride/ride_2.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 11,
+   "sound": "crash",
+   "name": "Crash",
+   "color": "#c79bff",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Crash/crash_1.wav",
+      "Crash/crash_2.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 12,
+   "sound": "bell",
+   "name": "Ride bell",
+   "color": "#a9ffd8",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Ride_bell/ride-bell_1.wav",
+      "Ride_bell/ride-bell_2.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 13,
+   "sound": "tomlow",
+   "name": "Tom low",
+   "color": "#ff9a6b",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Floor_tom/floor-tom_1.wav",
+      "Floor_tom/floor-tom_2.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 14,
+   "sound": "tommid",
+   "name": "Tom mid",
+   "color": "#ff9a6b",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Tom_mid/tom-mid_1.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 15,
+   "sound": "tomhigh",
+   "name": "Tom high",
+   "color": "#ff9a6b",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Tom_high/tom-high_1.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 16,
+   "sound": "shaker",
+   "name": "Shaker",
+   "color": "#d8d8d8",
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "Shaker/shaker_1.wav",
+      "Shaker/shaker_2.wav"
+     ]
+    }
+   ]
+  }
+ ]
 }

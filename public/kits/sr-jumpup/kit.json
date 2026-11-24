@@ -1,0 +1,250 @@
+{
+ "id": "sr-jumpup",
+ "name": "Jump Up (SampleRadar)",
+ "type": "oneshot",
+ "pads": [
+  {
+   "pad": 1,
+   "sound": "kick",
+   "name": "Kick",
+   "color": "#ff5a3c",
+   "gain": 0.85,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/Jump Up Kick 05.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 2,
+   "sound": "snare",
+   "name": "Snare",
+   "color": "#ffc23c",
+   "gain": 0.85,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/Jump Up Snare 01.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 3,
+   "sound": "snare",
+   "name": "Snare",
+   "color": "#ffc23c",
+   "gain": 0.85,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/Jump Up Snare 01.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 4,
+   "sound": "kick",
+   "name": "Kick",
+   "color": "#ff5a3c",
+   "gain": 0.85,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/Jump Up Kick 05.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 5,
+   "sound": "hat",
+   "name": "Hat",
+   "color": "#3cd6ff",
+   "gain": 0.6,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Hat 11.wav"
+     ]
+    }
+   ],
+   "choke": "hh"
+  },
+  {
+   "pad": 6,
+   "sound": "rim",
+   "name": "Rim",
+   "color": "#ffe9a8",
+   "gain": 0.75,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Perc 07.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 7,
+   "sound": "clap",
+   "name": "Clap",
+   "color": "#ff8fd0",
+   "gain": 0.75,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/Jump Up Snare 03.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 8,
+   "sound": "hat",
+   "name": "Hat",
+   "color": "#3cd6ff",
+   "gain": 0.6,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Hat 11.wav"
+     ]
+    }
+   ],
+   "choke": "hh"
+  },
+  {
+   "pad": 9,
+   "sound": "openhat",
+   "name": "Open hat",
+   "color": "#6fa8ff",
+   "gain": 0.55,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Hat 07.wav"
+     ]
+    }
+   ],
+   "choke": "hh"
+  },
+  {
+   "pad": 10,
+   "sound": "ride",
+   "name": "Ride",
+   "color": "#7dffb0",
+   "gain": 0.55,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Cymbal 12.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 11,
+   "sound": "crash",
+   "name": "Crash",
+   "color": "#c79bff",
+   "gain": 0.55,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Cymbal 10.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 12,
+   "sound": "bell",
+   "name": "Ride bell",
+   "color": "#a9ffd8",
+   "gain": 0.55,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Cymbal 11.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 13,
+   "sound": "tomlow",
+   "name": "Perc low",
+   "color": "#ff9a6b",
+   "gain": 0.75,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Perc 05.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 14,
+   "sound": "tommid",
+   "name": "Perc mid",
+   "color": "#ff9a6b",
+   "gain": 0.75,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Perc 11.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 15,
+   "sound": "tomhigh",
+   "name": "Perc high",
+   "color": "#ff9a6b",
+   "gain": 0.75,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Perc 10.wav"
+     ]
+    }
+   ]
+  },
+  {
+   "pad": 16,
+   "sound": "shaker",
+   "name": "Tamb",
+   "color": "#d8d8d8",
+   "gain": 0.75,
+   "layers": [
+    {
+     "upTo": 127,
+     "files": [
+      "../sampleradar/D_B Tamb 02.wav"
+     ]
+    }
+   ]
+  }
+ ]
+}

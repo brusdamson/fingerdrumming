@@ -1,6 +1,14 @@
 import { AudioClock } from './audio/clock';
 import { AudioEngine, type LoadedKit } from './audio/engine';
-import { buildSliceKit, loadBuiltinKit } from './audio/kit';
+import {
+  applyOverrides,
+  buildSliceKit,
+  loadBuiltinKit,
+  loadKitIndex,
+  loadPool,
+  type KitIndexEntry,
+  type SamplePool,
+} from './audio/kit';
 import { markersToSlices } from './audio/slicer';
 import { KEY_TO_PAD, MidiInput } from './midi/input';
 import { listStoredKits, type StoredKit } from './storage/kits';
@@ -51,7 +59,12 @@ export class App {
   private toastEl: HTMLElement | null = null;
   private toastTimer: number | undefined;
 
-  private kits = new Map<string, LoadedKit>();
+  /** Доступные встроенные киты и пул сэмплов для замены звуков (null — пул не скачан). */
+  kitIndex: KitIndexEntry[] = [];
+  pool: SamplePool | null = null;
+
+  private kits = new Map<string, LoadedKit>(); // с применёнными заменами звуков
+  private baseKits = new Map<string, LoadedKit>(); // как в манифесте
   private screen: Screen | null = null;
   private main = h('main', { class: 'main' });
   private nav = h('nav', { class: 'nav' });
@@ -162,9 +175,34 @@ export class App {
       }
     });
 
-    const [dnb] = await Promise.all([this.kit('dnb'), this.kit('amen')]);
-    this.engine.setKit(dnb);
+    const [index, pool] = await Promise.all([loadKitIndex(), loadPool()]);
+    this.pool = pool;
+    // Киты, которым нужны нескачанные сэмплы, в списках не показываем.
+    this.kitIndex = index.filter((k) => !k.requires || (k.requires === 'sampleradar' && pool !== null));
     this.userKits = await listStoredKits();
+    const [first] = await Promise.all([this.kit(this.lessonKitId()), this.kit('amen')]);
+    this.engine.setKit(first);
+  }
+
+  /** Кит для уроков на one-shot звуках: выбранный пользователем, иначе первый доступный. */
+  lessonKitId(): string {
+    const ids = this.kitChoices('oneshot').map((k) => k.id);
+    return ids.includes(this.settings.lessonKit) ? this.settings.lessonKit : (ids[0] ?? 'dnb');
+  }
+
+  /** Кит со слайсами для уроков чопа. */
+  sliceKitId(): string {
+    const ids = this.kitChoices('slices').map((k) => k.id);
+    return ids.includes(this.settings.sliceKit) ? this.settings.sliceKit : 'amen';
+  }
+
+  /** Заменить звук кита сэмплом из пула (file = null — вернуть родной звук кита). */
+  setSoundOverride(kitId: string, sound: string, file: string | null): void {
+    const o = (this.settings.soundOverrides[kitId] ??= {});
+    if (file) o[sound] = file;
+    else delete o[sound];
+    this.save();
+    this.kits.delete(kitId);
   }
 
   /** Центральная точка ввода: сначала звук (минимум задержки), потом логика экрана. */
@@ -187,7 +225,12 @@ export class App {
       const slices = markersToSlices(stored.markers.map((m) => m * scale), buffer.length);
       kit = buildSliceKit(this.engine, stored.id, stored.name, buffer, slices);
     } else {
-      kit = await loadBuiltinKit(this.engine, id);
+      let base = this.baseKits.get(id);
+      if (!base) {
+        base = await loadBuiltinKit(this.engine, id);
+        this.baseKits.set(id, base);
+      }
+      kit = await applyOverrides(this.engine, base, this.settings.soundOverrides[id], this.pool);
     }
     this.kits.set(id, kit);
     return kit;
@@ -195,14 +238,13 @@ export class App {
 
   forgetKit(id: string): void {
     this.kits.delete(id);
+    this.baseKits.delete(id);
   }
 
-  /** Список китов для выбора: встроенные + пользовательские. */
-  kitChoices(onlySlices = false): { id: string; name: string }[] {
-    const out: { id: string; name: string }[] = [];
-    if (!onlySlices) out.push({ id: 'dnb', name: 'DnB-кит (one-shot)' });
-    out.push({ id: 'amen', name: 'Amen break (слайсы)' });
-    for (const k of this.userKits) out.push({ id: k.id, name: k.name });
+  /** Список китов для выбора: встроенные + пользовательские (нарезанные брейки). */
+  kitChoices(kind?: 'oneshot' | 'slices'): { id: string; name: string }[] {
+    const out = this.kitIndex.filter((k) => !kind || k.kind === kind).map((k) => ({ id: k.id, name: k.name }));
+    if (kind !== 'oneshot') for (const k of this.userKits) out.push({ id: k.id, name: k.name });
     return out;
   }
 

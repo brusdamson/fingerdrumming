@@ -1,0 +1,47 @@
+[
+ {
+  "id": "sr-dnb",
+  "name": "DnB (SampleRadar)",
+  "kind": "oneshot",
+  "requires": "sampleradar"
+ },
+ {
+  "id": "sr-dnb2",
+  "name": "DnB 2 (SampleRadar)",
+  "kind": "oneshot",
+  "requires": "sampleradar"
+ },
+ {
+  "id": "sr-jungle",
+  "name": "Jungle (SampleRadar)",
+  "kind": "oneshot",
+  "requires": "sampleradar"
+ },
+ {
+  "id": "sr-jungle2",
+  "name": "Jungle 2 (SampleRadar)",
+  "kind": "oneshot",
+  "requires": "sampleradar"
+ },
+ {
+  "id": "sr-jumpup",
+  "name": "Jump Up (SampleRadar)",
+  "kind": "oneshot",
+  "requires": "sampleradar"
+ },
+ {
+  "id": "breakbeat",
+  "name": "Breakbeat-кит (fingerdrum.io)",
+  "kind": "oneshot"
+ },
+ {
+  "id": "dnb",
+  "name": "Студийный DnB-кит (fingerdrum.io)",
+  "kind": "oneshot"
+ },
+ {
+  "id": "amen",
+  "name": "Amen break (слайсы)",
+  "kind": "slices"
+ }
+]

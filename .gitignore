@@ -3,3 +3,6 @@ dist/
 *.log
 .DS_Store
 .claude/
+
+# SampleRadar: royalty-free, no redistribution - fetched by scripts/fetch-samples.mjs
+public/kits/sampleradar/

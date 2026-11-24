@@ -26,18 +26,82 @@ interface SliceManifest {
   pick: number[];
 }
 
+/** Запись списка китов (public/kits/index.json). */
+export interface KitIndexEntry {
+  id: string;
+  name: string;
+  kind: 'oneshot' | 'slices';
+  /** Набор файлов, без которого кит недоступен (например, 'sampleradar' — не хранится в git). */
+  requires?: string;
+}
+
+/** Пул отдельных сэмплов для замены звуков кита (public/kits/pool.json). */
+export interface SamplePool {
+  categories: Record<string, { gain: number; files: string[] }>;
+  /** звук → категория */
+  sounds: Record<string, string>;
+}
+
+/** Замены звуков: звук → путь файла из пула (относительно /kits/). */
+export type SoundOverrides = Record<string, string>;
+
+const KITS = '/kits/';
 const SLICE_COLORS = ['#ff5a3c', '#ff8a3c', '#ffc23c', '#d6e04a', '#7dffb0', '#3cd6ff', '#6fa8ff', '#c79bff'];
 
-async function fetchBuffer(engine: AudioEngine, url: string): Promise<AudioBuffer> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Не удалось загрузить ${url}: ${res.status}`);
-  return engine.decode(await res.arrayBuffer());
+const bufferCache = new Map<string, Promise<AudioBuffer>>();
+
+/** Загружает и декодирует файл; повторные обращения к тому же URL берутся из кэша. */
+export function fetchBuffer(engine: AudioEngine, url: string): Promise<AudioBuffer> {
+  let p = bufferCache.get(url);
+  if (!p) {
+    p = (async () => {
+      const res = await fetch(url);
+      const type = res.headers.get('content-type') ?? '';
+      // Dev-сервер на отсутствующий файл отдаёт index.html с кодом 200 — проверяем тип.
+      if (!res.ok || type.startsWith('text/html')) throw new Error(`Нет файла ${decodeURI(url)}`);
+      return engine.decode(await res.arrayBuffer());
+    })();
+    bufferCache.set(url, p);
+    p.catch(() => bufferCache.delete(url));
+  }
+  return p;
+}
+
+export async function loadKitIndex(): Promise<KitIndexEntry[]> {
+  const res = await fetch(KITS + 'index.json');
+  if (!res.ok) throw new Error('Не найден список китов');
+  return (await res.json()) as KitIndexEntry[];
+}
+
+/** Пул есть только если скачаны сэмплы SampleRadar; иначе null. */
+export async function loadPool(): Promise<SamplePool | null> {
+  try {
+    const res = await fetch(KITS + 'pool.json');
+    if (!res.ok || (res.headers.get('content-type') ?? '').startsWith('text/html')) return null;
+    const pool = (await res.json()) as SamplePool;
+    const probe = Object.values(pool.categories)[0]?.files[0];
+    if (!probe) return null;
+    const head = await fetch(KITS + probe, { method: 'HEAD' });
+    if (!head.ok || (head.headers.get('content-type') ?? '').startsWith('text/html')) return null;
+    return pool;
+  } catch {
+    return null;
+  }
+}
+
+export function poolFilesFor(pool: SamplePool | null, sound: string): string[] {
+  const cat = pool?.sounds[sound];
+  return cat ? (pool!.categories[cat]?.files ?? []) : [];
+}
+
+export function sampleLabel(file: string): string {
+  return file.replace(/^.*\//, '').replace(/\.[^.]+$/, '').replace(/_/g, '&');
 }
 
 export async function loadBuiltinKit(engine: AudioEngine, id: string): Promise<LoadedKit> {
-  const base = `/kits/${id}/`;
+  const base = `${KITS}${id}/`;
   const res = await fetch(base + 'kit.json');
-  if (!res.ok) throw new Error(`Кит ${id} не найден`);
+  if (!res.ok || (res.headers.get('content-type') ?? '').startsWith('text/html')) throw new Error(`Кит ${id} не найден`);
   const man = (await res.json()) as OneShotManifest | SliceManifest;
 
   if (man.type === 'slices') {
@@ -81,6 +145,39 @@ export async function loadBuiltinKit(engine: AudioEngine, id: string): Promise<L
     };
   }
   return { id: man.id, name: man.name, kind: 'oneshot', pads, builtin: true };
+}
+
+/**
+ * Возвращает копию кита, в которой указанные звуки заменены сэмплами из пула.
+ * Заменённый звук играет одним сэмплом на всех своих пэдах; тихие удары получаются за счёт громкости.
+ */
+export async function applyOverrides(
+  engine: AudioEngine,
+  kit: LoadedKit,
+  overrides: SoundOverrides | undefined,
+  pool: SamplePool | null,
+): Promise<LoadedKit> {
+  if (!overrides || !pool || kit.kind !== 'oneshot') return kit;
+  const entries = Object.entries(overrides).filter(([sound, file]) => poolFilesFor(pool, sound).includes(file));
+  if (!entries.length) return kit;
+  const loaded = new Map<string, { buffer: AudioBuffer; gain: number }>();
+  await Promise.all(
+    entries.map(async ([sound, file]) => {
+      try {
+        const buffer = await fetchBuffer(engine, KITS + file);
+        loaded.set(sound, { buffer, gain: pool.categories[pool.sounds[sound]]?.gain ?? 0.8 });
+      } catch {
+        /* файла нет — оставляем звук кита */
+      }
+    }),
+  );
+  return {
+    ...kit,
+    pads: kit.pads.map((p) => {
+      const o = p && loaded.get(p.sound);
+      return p && o ? { ...p, gain: o.gain, layers: [{ upTo: 127, buffers: [o.buffer] }] } : p;
+    }),
+  };
 }
 
 export function channelsOf(buffer: AudioBuffer): Float32Array[] {
