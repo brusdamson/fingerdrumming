@@ -22,7 +22,7 @@ export async function sliceEditorScreen(): Promise<Screen> {
   let mono: Float32Array | null = null;
   let markers: number[] = [];
   let mode: SliceMode = 'transients';
-  let sensitivity = 0.6;
+  let sensitivity = 0.45;
   let gridCount = 16;
   let playing: AudioBufferSourceNode | null = null;
   let drag: number | null = null;
@@ -97,7 +97,7 @@ export async function sliceEditorScreen(): Promise<Screen> {
       markers[0] = 0;
     } else {
       markers = detectOnsets(mono, buffer.sampleRate, sensitivity);
-      if (markers.length === 0 || markers[0] > buffer.sampleRate * 0.03) markers.unshift(0);
+      if (markers.length === 0) markers = [0];
     }
     applyMarkers();
   }

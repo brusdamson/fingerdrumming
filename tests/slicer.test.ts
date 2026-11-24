@@ -42,6 +42,12 @@ describe('slicer', () => {
     expect(detectOnsets(x, SR, 1).length).toBe(4);
   });
 
+  it('луп, обрезанный в ноль: первый слайс начинается с начала файла', () => {
+    const onsets = detectOnsets(bursts([0, 0.3, 0.6], 0.9), SR, 0.6);
+    expect(onsets[0]).toBe(0);
+    expect(onsets.length).toBe(3);
+  });
+
   it('тишина не даёт слайсов', () => {
     expect(detectOnsets(new Float32Array(SR), SR, 1)).toEqual([]);
   });

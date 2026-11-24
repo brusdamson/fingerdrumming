@@ -109,6 +109,18 @@ export function detectOnsets(
     const pos = snapToZero(x, at, Math.round(sampleRate * 0.0015), true);
     if (onsets.length === 0 || pos - onsets[onsets.length - 1] > hop) onsets.push(pos);
   }
+
+  // Если файл начинается сразу с удара (луп обрезан «в ноль»), роста огибающей там нет —
+  // добавляем начало файла как первый транзиент. Если в начале тишина, она останется за первым маркером.
+  let globalPeak = 0;
+  for (let i = 0; i < x.length; i += 7) globalPeak = Math.max(globalPeak, Math.abs(x[i]));
+  let headPeak = 0;
+  const head = Math.min(x.length, Math.round(sampleRate * 0.005));
+  for (let i = 0; i < head; i++) headPeak = Math.max(headPeak, Math.abs(x[i]));
+  if (headPeak > globalPeak * 0.1) {
+    const minGap = Math.round(minGapSec * sampleRate);
+    return [0, ...onsets.filter((o) => o > minGap)];
+  }
   return onsets;
 }
 
