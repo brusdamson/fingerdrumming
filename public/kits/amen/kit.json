@@ -1,0 +1,9 @@
+{
+  "id": "amen",
+  "name": "Amen break (слайсы)",
+  "type": "slices",
+  "file": "loop_amen_full.flac",
+  "bars": 4,
+  "slicesPerBar": 8,
+  "pick": [0, 1, 2, 3, 4, 5, 6, 7, 24, 25, 26, 27, 28, 29, 30, 31]
+}
