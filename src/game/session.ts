@@ -81,6 +81,11 @@ export class Session {
     return this.o.bpm;
   }
 
+  /** Время AudioContext первой доли паттерна (после отсчёта). */
+  get startTime(): number {
+    return this.t0;
+  }
+
   get totalDuration(): number {
     return this.totalLoops * this.loopDur;
   }

@@ -82,6 +82,8 @@ ul.hint { padding-left: 18px; margin: 10px 0 0; }
 .check { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); cursor: pointer; margin-left: 6px; }
 .slider { display: flex; gap: 10px; align-items: center; margin: 8px 0; }
 .slider input[type='range'] { width: 220px; accent-color: var(--green); }
+.backing { display: inline-flex; gap: 8px; align-items: center; margin-left: 6px; }
+.backing-vol { width: 110px; accent-color: var(--green); }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin: 16px 0; }
 
 .chip {

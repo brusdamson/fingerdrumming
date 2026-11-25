@@ -34,6 +34,8 @@ export interface Screen {
 
 export type ScreenFactory = () => Screen | Promise<Screen>;
 
+import { Backing } from './audio/backing';
+
 export interface NavItem {
   id: string;
   label: string;
@@ -42,6 +44,7 @@ export interface NavItem {
 
 export class App {
   engine = new AudioEngine();
+  backing = new Backing();
   clock!: AudioClock;
   midi = new MidiInput();
   settings: Settings = loadSettings();
@@ -119,6 +122,7 @@ export class App {
 
   private async boot(): Promise<void> {
     this.engine.init(this.settings.masterVol, this.settings.clickVol);
+    this.backing.setVolume(this.settings.backingVol);
     await this.engine.resume();
     if (this.settings.sinkId) {
       try {

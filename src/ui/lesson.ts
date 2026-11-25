@@ -7,6 +7,8 @@ import { LESSONS } from '../lessons';
 import { saveProgress } from '../storage/settings';
 import { clear, fmtMs, h } from '../util/dom';
 import { poolFilesFor, sampleLabel } from '../audio/kit';
+import { backingById } from '../audio/backing';
+import { backingControls } from './backingUi';
 import { PadGrid } from './padGrid';
 import { resultsPanel } from './results';
 
@@ -84,6 +86,7 @@ export async function lessonScreen(lesson: Lesson): Promise<Screen> {
       }),
       'метроном',
     ),
+    ...backingControls(() => startBacking()),
   );
 
   /** Применить (заново загруженный) кит ко всему экрану урока. */
@@ -276,6 +279,7 @@ export async function lessonScreen(lesson: Lesson): Promise<Screen> {
     });
     app.debugSession = session;
     session.start();
+    startBacking();
     renderHud(
       mode === 'practice'
         ? 'Паттерн идёт по кругу. Остановить — «Стоп».'
@@ -287,7 +291,19 @@ export async function lessonScreen(lesson: Lesson): Promise<Screen> {
     );
   }
 
+  /** Подыгрыш идёт от первой доли паттерна; в режиме «без темпа» его нет — там нет сетки. */
+  function startBacking(): void {
+    const s = session;
+    const style = backingById(app.settings.backing);
+    if (!s || !style || s.mode === 'wait') {
+      app.backing.stop();
+      return;
+    }
+    app.backing.start(app.engine.ctx, style, s.bpm, s.startTime, s.startTime + s.totalDuration);
+  }
+
   function stop(): void {
+    app.backing.stop();
     if (session) {
       const wasDemo = session.mode === 'demo';
       session.stop();
@@ -300,6 +316,7 @@ export async function lessonScreen(lesson: Lesson): Promise<Screen> {
   function finish(st: Stats | null, mode: Mode): void {
     const s = session;
     session = null;
+    app.backing.stop();
     renderHud('');
     if (!st || mode !== 'exam' || !s) return;
     const key = String(bpm);
@@ -399,6 +416,7 @@ export async function lessonScreen(lesson: Lesson): Promise<Screen> {
     destroy: () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
+      app.backing.stop();
       if (session) {
         session.stop();
         app.engine.stopAll();

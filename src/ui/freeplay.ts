@@ -1,5 +1,7 @@
 import { app, type Screen } from '../app';
 import { h } from '../util/dom';
+import { backingById } from '../audio/backing';
+import { backingControls } from './backingUi';
 import { PadGrid } from './padGrid';
 
 export async function freeplayScreen(): Promise<Screen> {
@@ -8,10 +10,12 @@ export async function freeplayScreen(): Promise<Screen> {
 
   const padGrid = new PadGrid((pad, vel, ts) => app.pad(pad, vel, ts));
   padGrid.setKit(kit);
-  const info = h('div', { class: 'status' }, 'Бей по пэдам. Здесь ничего не оценивается — просто звук.');
+  const info = h('div', { class: 'status' }, 'Бей по пэдам. Здесь ничего не оценивается — выбери подыгрыш, нажми «Играть» и драмь под него.');
 
-  // Простой метроном для свободной игры
+  // Транспорт свободной игры: метроном и подыгрыш идут по одной сетке от t0.
   let bpm = 174;
+  let running = false;
+  let clickOn = app.settings.metronome;
   let timer: number | undefined;
   let nextBeat = 0;
   let t0 = 0;
@@ -23,22 +27,39 @@ export async function freeplayScreen(): Promise<Screen> {
       nextBeat++;
     }
   };
-  const stopClick = () => {
+  /** Привести звучащее к текущим настройкам, не сбивая сетку. */
+  const apply = () => {
     if (timer !== undefined) clearInterval(timer);
     timer = undefined;
-    clickBtn.textContent = '▶ Метроном';
+    if (!running) {
+      app.backing.stop();
+      return;
+    }
+    const ctx = app.engine.ctx;
+    if (clickOn) {
+      nextBeat = Math.max(0, Math.ceil((ctx.currentTime + 0.02 - t0) / (60 / bpm)));
+      tick();
+      timer = window.setInterval(tick, 25);
+    }
+    const style = backingById(app.settings.backing);
+    if (style) app.backing.start(ctx, style, bpm, t0);
+    else app.backing.stop();
+  };
+  const stopClick = () => {
+    running = false;
+    apply();
+    clickBtn.textContent = '▶ Играть';
   };
   const startClick = () => {
-    stopClick();
+    running = true;
     t0 = app.engine.ctx.currentTime + 0.1;
-    nextBeat = 0;
-    timer = window.setInterval(tick, 25);
-    clickBtn.textContent = '■ Метроном';
+    apply();
+    clickBtn.textContent = '■ Стоп';
   };
   const clickBtn = h(
     'button',
-    { class: 'btn', type: 'button', onclick: () => (timer === undefined ? startClick() : stopClick()) },
-    '▶ Метроном',
+    { class: 'btn btn-primary', type: 'button', onclick: () => (running ? stopClick() : startClick()) },
+    '▶ Играть',
   );
 
   const el = h(
@@ -75,11 +96,25 @@ export async function freeplayScreen(): Promise<Screen> {
           const v = Number((e.target as HTMLInputElement).value);
           if (v >= 40 && v <= 220) {
             bpm = v;
-            if (timer !== undefined) startClick();
+            if (running) startClick();
           }
         },
       }),
       h('span', { class: 'label' }, 'BPM'),
+      h(
+        'label',
+        { class: 'check' },
+        h('input', {
+          type: 'checkbox',
+          checked: clickOn,
+          onchange: (e: Event) => {
+            clickOn = (e.target as HTMLInputElement).checked;
+            apply();
+          },
+        }),
+        'метроном',
+      ),
+      ...backingControls(apply),
     ),
     padGrid.el,
     info,
