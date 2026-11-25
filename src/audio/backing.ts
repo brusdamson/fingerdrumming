@@ -17,7 +17,9 @@ export interface BackingStyle {
   name: string;
   bars: number;
   bass: BassNote[];
-  bassType: 'sub' | 'reese';
+  bassType: 'sub' | 'reese' | 'dist' | 'neuro';
+  /** Период качания фильтра в шагах (16-х) — для wobble-баса. */
+  wobble?: number;
   chords: Chord[];
 }
 
@@ -69,7 +71,85 @@ export const BACKINGS: BackingStyle[] = [
     ],
     chords: [],
   },
+  {
+    id: 'techstep2',
+    name: 'Techstep 2: стаккато reese',
+    bars: 4,
+    bassType: 'reese',
+    bass: [
+      [0, 2, 29], [3, 2, 29], [6, 2, 29], [8, 4, 29], [14, 2, 32],
+      [16, 2, 29], [19, 2, 29], [22, 2, 29], [24, 4, 31], [28, 4, 30],
+      [32, 2, 29], [35, 2, 29], [38, 2, 29], [40, 4, 29], [46, 2, 32],
+      [48, 2, 29], [51, 2, 29], [54, 2, 29], [56, 8, 36, 29],
+    ],
+    chords: [],
+  },
+  {
+    id: 'darkstep',
+    name: 'Darkstep: перегруженный reese + тревожный пэд',
+    bars: 4,
+    bassType: 'dist',
+    bass: [
+      [0, 10, 29], [10, 6, 30],
+      [16, 6, 29], [22, 2, 29], [24, 8, 36, 35],
+      [32, 10, 29], [42, 6, 30],
+      [48, 4, 32], [52, 4, 30], [56, 8, 29, 28],
+    ],
+    chords: [
+      { bar: 0, bars: 2, notes: [53, 60, 66] }, // F – C – Gb
+      { bar: 2, bars: 2, notes: [53, 59, 66] }, // F – B – Gb
+    ],
+  },
+  {
+    id: 'neuro',
+    name: 'Neurofunk: рычащий wobble-бас',
+    bars: 4,
+    bassType: 'neuro',
+    wobble: 2,
+    bass: [
+      [0, 3, 29], [3, 1, 29], [6, 2, 29], [10, 2, 32], [12, 3, 30],
+      [16, 3, 29], [19, 1, 29], [22, 2, 29], [24, 2, 36], [26, 2, 35], [28, 4, 30],
+      [32, 3, 29], [35, 1, 29], [38, 2, 29], [42, 2, 32], [44, 3, 30],
+      [48, 2, 29], [50, 2, 29], [52, 2, 32], [54, 2, 30], [56, 8, 36, 29],
+    ],
+    chords: [],
+  },
+  {
+    id: 'jumpup',
+    name: 'Jump-up: прыгающий бас через октаву',
+    bars: 4,
+    bassType: 'neuro',
+    wobble: 1,
+    bass: [
+      [0, 2, 29], [2, 2, 41], [6, 2, 29], [8, 2, 41], [12, 2, 32], [14, 2, 44],
+      [16, 2, 29], [18, 2, 41], [22, 2, 29], [24, 4, 41, 29], [28, 4, 30],
+      [32, 2, 29], [34, 2, 41], [38, 2, 29], [40, 2, 41], [44, 2, 32], [46, 2, 44],
+      [48, 2, 29], [50, 2, 41], [52, 2, 29], [54, 2, 41], [56, 4, 36], [60, 4, 34],
+    ],
+    chords: [],
+  },
 ];
+
+/** Характер «рычащего» баса: перегруз, движение фильтра, расстройка пил. */
+interface Growl {
+  drive: number; // 0 — без перегруза
+  detune: number; // центы
+  q: number;
+  lp: [from: number, peak: number, to: number]; // Гц; при wobble — [низ, верх, —]
+  level: number;
+}
+const GROWL: Record<'reese' | 'dist' | 'neuro', Growl> = {
+  reese: { drive: 0, detune: 19, q: 3, lp: [260, 720, 380], level: 0.5 },
+  dist: { drive: 5, detune: 26, q: 4, lp: [320, 1500, 520], level: 0.25 },
+  neuro: { drive: 9, detune: 14, q: 8, lp: [140, 1250, 140], level: 0.21 },
+};
+
+function driveCurve(k: number): Float32Array<ArrayBuffer> {
+  const n = 1024;
+  const c = new Float32Array(n);
+  for (let i = 0; i < n; i++) c[i] = Math.tanh(k * ((i / (n - 1)) * 2 - 1));
+  return c;
+}
 
 export function backingById(id: string): BackingStyle | undefined {
   return BACKINGS.find((b) => b.id === id);
@@ -124,7 +204,9 @@ export class Backing {
       evs.push({
         step,
         run: (t, sd) =>
-          style.bassType === 'reese' ? this.reese(t, len * sd, midi) : this.sub(t, len * sd, midi, slide),
+          style.bassType === 'sub'
+            ? this.sub(t, len * sd, midi, slide)
+            : this.growl(t, len * sd, midi, slide, GROWL[style.bassType], style.wobble ? style.wobble * sd : 0),
       });
     }
     for (const c of style.chords) {
@@ -211,35 +293,74 @@ export class Backing {
     window.setTimeout(() => g.disconnect(), (stopAt - ctx.currentTime) * 1000 + 100);
   }
 
-  private reese(t: number, dur: number, midi: number): void {
+  /** Reese и его злые родственники: расстроенные пилы → перегруз → резонансный фильтр, плюс чистый саб. */
+  private growl(t: number, dur: number, midi: number, slideTo: number | undefined, p: Growl, wobbleSec: number): void {
     const ctx = this.ctx!;
     const g = ctx.createGain();
-    const stopAt = this.gate(g, t, dur, 0.5, 0.012, 0.09);
+    const stopAt = this.gate(g, t, dur, 1, 0.012, 0.09);
     const f = mtof(midi);
+    const pitch = (o: OscillatorNode, mul: number) => {
+      o.frequency.setValueAtTime(f * mul, t);
+      if (slideTo !== undefined) {
+        o.frequency.setValueAtTime(f * mul, t + dur * 0.45);
+        o.frequency.exponentialRampToValueAtTime(mtof(slideTo) * mul, t + dur * 0.9);
+      }
+    };
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
-    lp.Q.value = 3;
-    lp.frequency.setValueAtTime(260, t);
-    lp.frequency.linearRampToValueAtTime(720, t + dur * 0.7);
-    lp.frequency.linearRampToValueAtTime(380, t + dur);
-    // Две расстроенные пилы октавой выше дают характерное «рычание» с биениями.
-    for (const cents of [-19, 19]) {
+    lp.Q.value = p.q;
+    const [from, peak, to] = p.lp;
+    if (wobbleSec > 0) {
+      // Фильтр качается в ритм сетки: каждая нота начинает с закрытого фильтра.
+      const mid = (from + peak) / 2;
+      lp.frequency.value = mid;
+      const lfo = ctx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 1 / wobbleSec;
+      const depth = ctx.createGain();
+      depth.gain.value = -(peak - from) / 2;
+      lfo.connect(depth);
+      depth.connect(lp.frequency);
+      // Старт на четверть периода раньше ноты: к её началу фильтр в нижней точке.
+      lfo.start(Math.max(0, t - wobbleSec / 4));
+      lfo.stop(stopAt);
+    } else {
+      lp.frequency.setValueAtTime(from, t);
+      lp.frequency.linearRampToValueAtTime(peak, t + dur * 0.7);
+      lp.frequency.linearRampToValueAtTime(to, t + dur);
+    }
+    let pre: AudioNode = lp;
+    if (p.drive > 0) {
+      const ws = ctx.createWaveShaper();
+      ws.curve = driveCurve(p.drive);
+      ws.oversample = '2x';
+      ws.connect(lp);
+      pre = ws;
+    }
+    // Расстроенные пилы октавой выше дают характерное «рычание» с биениями.
+    for (const cents of [-p.detune, p.detune]) {
       const o = ctx.createOscillator();
       o.type = 'sawtooth';
-      o.frequency.value = f * 2;
+      pitch(o, 2);
       o.detune.value = cents;
       const og = ctx.createGain();
       og.gain.value = 0.3;
       o.connect(og);
-      og.connect(lp);
+      og.connect(pre);
       o.start(t);
       o.stop(stopAt);
     }
-    lp.connect(g);
+    const top = ctx.createGain();
+    top.gain.value = p.level;
+    lp.connect(top);
+    top.connect(g);
     const s = ctx.createOscillator();
     s.type = 'sine';
-    s.frequency.value = f;
-    s.connect(g);
+    pitch(s, 1);
+    const sg = ctx.createGain();
+    sg.gain.value = 0.5;
+    s.connect(sg);
+    sg.connect(g);
     s.start(t);
     s.stop(stopAt);
     g.connect(this.bus!);

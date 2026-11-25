@@ -16,10 +16,10 @@ describe('подыгрыш', () => {
         expect(len).toBeGreaterThan(0);
         expect(step + len).toBeLessThanOrEqual(steps);
         if (i > 0) expect(step).toBeGreaterThanOrEqual(bass[i - 1][0] + bass[i - 1][1]);
-        // бас держим в диапазоне, который слышен и не гудит: E1…E2
+        // бас держим в диапазоне, который слышен и не гудит: E1…Ab2 (верх — для прыжков через октаву)
         for (const m of slide === undefined ? [midi] : [midi, slide]) {
           expect(m).toBeGreaterThanOrEqual(28);
-          expect(m).toBeLessThanOrEqual(40);
+          expect(m).toBeLessThanOrEqual(44);
         }
       });
       for (const c of b.chords) {
