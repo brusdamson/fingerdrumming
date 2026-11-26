@@ -220,3 +220,9 @@ ul.hint { padding-left: 18px; margin: 10px 0 0; }
 .sound-row { display: flex; gap: 8px; align-items: center; }
 .sound-row select { flex: 1; min-width: 0; }
 .sound-name { width: 74px; font-weight: 600; font-size: 13px; border-left: 4px solid; padding-left: 8px; }
+
+.padsounds { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin: 8px 0; }
+.padsounds .hint { margin: 0 0 10px; }
+.padsound-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 10px; }
+.padsound { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.padsound select { width: 100%; min-width: 0; }

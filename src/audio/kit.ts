@@ -33,6 +33,8 @@ export interface KitIndexEntry {
   kind: 'oneshot' | 'slices';
   /** Набор файлов, без которого кит недоступен (например, 'sampleradar' — не хранится в git). */
   requires?: string;
+  /** Манифест прямо в списке (брейки-слайсы) — тогда отдельного kit.json нет. */
+  manifest?: SliceManifest;
 }
 
 /** Пул отдельных сэмплов для замены звуков кита (public/kits/pool.json). */
@@ -98,11 +100,15 @@ export function sampleLabel(file: string): string {
   return file.replace(/^.*\//, '').replace(/\.[^.]+$/, '').replace(/_/g, '&');
 }
 
-export async function loadBuiltinKit(engine: AudioEngine, id: string): Promise<LoadedKit> {
+export async function loadBuiltinKit(engine: AudioEngine, id: string, inline?: SliceManifest): Promise<LoadedKit> {
   const base = `${KITS}${id}/`;
-  const res = await fetch(base + 'kit.json');
-  if (!res.ok || (res.headers.get('content-type') ?? '').startsWith('text/html')) throw new Error(`Кит ${id} не найден`);
-  const man = (await res.json()) as OneShotManifest | SliceManifest;
+  let man: OneShotManifest | SliceManifest;
+  if (inline) man = inline;
+  else {
+    const res = await fetch(base + 'kit.json');
+    if (!res.ok || (res.headers.get('content-type') ?? '').startsWith('text/html')) throw new Error(`Кит ${id} не найден`);
+    man = (await res.json()) as OneShotManifest | SliceManifest;
+  }
 
   if (man.type === 'slices') {
     const buffer = await fetchBuffer(engine, base + man.file);
@@ -178,6 +184,62 @@ export async function applyOverrides(
       return p && o ? { ...p, gain: o.gain, layers: [{ upTo: 127, buffers: [o.buffer] }] } : p;
     }),
   };
+}
+
+/** Замены по пэдам (свободная игра): номер пэда → файл из пула. */
+export type PadOverrides = Record<string, string>;
+
+const CATEGORY_COLORS: Record<string, string> = {
+  kicks: '#ff5a3c',
+  snares: '#ffc23c',
+  hats: '#3cd6ff',
+  cymbals: '#7dffb0',
+  perc: '#ff9a6b',
+  breaks: '#c79bff',
+};
+
+export function poolCategoryOf(pool: SamplePool | null, file: string): string | undefined {
+  if (!pool) return undefined;
+  return Object.keys(pool.categories).find((c) => pool.categories[c].files.includes(file));
+}
+
+/**
+ * Возвращает копию кита, где на указанные пэды положены любые сэмплы из пула
+ * (в том числе на пустые пэды и поверх слайсов). Используется только в свободной игре:
+ * в уроках пэд обязан играть свой звук.
+ */
+export async function applyPadOverrides(
+  engine: AudioEngine,
+  kit: LoadedKit,
+  overrides: PadOverrides | undefined,
+  pool: SamplePool | null,
+): Promise<LoadedKit> {
+  if (!overrides || !pool) return kit;
+  const pads = [...kit.pads];
+  let changed = false;
+  await Promise.all(
+    Object.entries(overrides).map(async ([padNo, file]) => {
+      const i = Number(padNo) - 1;
+      const cat = poolCategoryOf(pool, file);
+      if (!(i >= 0 && i < 16) || !cat) return;
+      try {
+        const buffer = await fetchBuffer(engine, KITS + file);
+        pads[i] = {
+          pad: i + 1,
+          sound: pads[i]?.sound ?? `p${i + 1}`,
+          name: sampleLabel(file),
+          color: CATEGORY_COLORS[cat] ?? '#8a93a6',
+          choke: cat === 'hats' ? 'hh' : undefined,
+          gain: pool.categories[cat].gain,
+          layers: [{ upTo: 127, buffers: [buffer] }],
+        };
+        changed = true;
+      } catch {
+        /* файла нет — пэд остаётся как в ките */
+      }
+    }),
+  );
+  return changed ? { ...kit, pads } : kit;
 }
 
 export function channelsOf(buffer: AudioBuffer): Float32Array[] {

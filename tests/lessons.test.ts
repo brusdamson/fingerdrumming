@@ -61,6 +61,21 @@ describe('уроки', () => {
     });
   }
 
+  it('брейки SampleRadar: по 16 слайсов, файлы на месте (если скачаны)', () => {
+    const beats = read<{ id: string; kind: string; manifest?: { id: string; file: string; bars: number; slicesPerBar: number; pick: number[] } }[]>(
+      'public/kits/index.json',
+    ).filter((k) => k.manifest);
+    expect(beats.length).toBeGreaterThan(0);
+    for (const k of beats) {
+      const m = k.manifest!;
+      expect(k.kind).toBe('slices');
+      expect(m.id).toBe(k.id);
+      expect(m.pick.length).toBe(16);
+      expect(Math.max(...m.pick)).toBeLessThan(m.bars * m.slicesPerBar);
+      if (haveSampleRadar) expect(existsSync(`public/kits/${k.id}/${m.file}`.replace(/[^/]+\/\.\.\//, '')), m.file).toBe(true);
+    }
+  });
+
   it('amen: 16 слайсов', () => {
     expect(amen.pick.length).toBe(16);
   });

@@ -22,6 +22,8 @@ export interface Settings {
   lessonKit: string;
   /** Замены звуков: кит → звук → файл из пула сэмплов. */
   soundOverrides: Record<string, Record<string, string>>;
+  /** Свободная игра: кит → номер пэда → файл из пула сэмплов. */
+  padOverrides: Record<string, Record<string, string>>;
   /** Подыгрыш (id стиля из audio/backing.ts); пусто — выключен. */
   backing: string;
   backingVol: number;
@@ -43,6 +45,7 @@ function defaults(): Settings {
     sliceKit: 'amen',
     lessonKit: '',
     soundOverrides: {},
+    padOverrides: {},
     backing: '',
     backingVol: 0.6,
   };

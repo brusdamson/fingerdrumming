@@ -177,6 +177,25 @@
     "sampleradar/D_B Tamb 01.wav",
     "sampleradar/D_B Tamb 02.wav"
    ]
+  },
+  "fx": {
+   "gain": 0.7,
+   "files": [
+    "sampleradar/Jungle FX Airhorn 01.wav",
+    "sampleradar/Jungle FX Airhorn 02.wav",
+    "sampleradar/Jungle FX Airhorn.wav",
+    "sampleradar/Jungle FX Alarm.wav",
+    "sampleradar/Jungle FX Pitched Roll.wav",
+    "sampleradar/Jungle FX Roll.wav",
+    "sampleradar/Roll 01.wav",
+    "sampleradar/Roll 02.wav",
+    "sampleradar/Roll 03.wav",
+    "sampleradar/Roll 04.wav",
+    "sampleradar/Roll 05.wav",
+    "sampleradar/Stab 01 (C).wav",
+    "sampleradar/Stab 02 (C).wav",
+    "sampleradar/Sub Drop.wav"
+   ]
   }
  },
  "sounds": {

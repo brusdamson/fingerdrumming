@@ -231,7 +231,7 @@ export class App {
     } else {
       let base = this.baseKits.get(id);
       if (!base) {
-        base = await loadBuiltinKit(this.engine, id);
+        base = await loadBuiltinKit(this.engine, id, this.kitIndex.find((k) => k.id === id)?.manifest);
         this.baseKits.set(id, base);
       }
       kit = await applyOverrides(this.engine, base, this.settings.soundOverrides[id], this.pool);

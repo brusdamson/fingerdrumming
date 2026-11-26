@@ -13,19 +13,30 @@ const PAGE = 'https://www.musicradar.com/news/sampleradar-drum-and-bass-essentia
 const DEST = join('public', 'kits', 'sampleradar');
 // Берём только отдельные хиты этих серий (лупы, басы и FX приложению не нужны).
 const WANT = /^(D_B|Jungle|Jump Up|Drum Machine) .*\.wav$/i;
+// Брейки для китов-слайсов (в подпапку beats), роллы и джангл-FX — как отдельные звуки для пэдов.
+const WANT_BEATS = /^(Sped Up Break|Jungle Beat|DnB Beat|Jump Up Beat) .*\.wav$/i;
+const WANT_ROLLS = /^Roll \d+\.wav$/i;
+const WANT_FX = /^(Jungle FX|Stab|Sub Drop).*\.wav$/i;
+const BEATS = join(DEST, 'beats');
 
-if (existsSync(DEST) && readdirSync(DEST).some((f) => WANT.test(f)) && !process.argv.includes('--force')) {
+const have = existsSync(DEST) && readdirSync(DEST).some((f) => WANT.test(f)) && existsSync(BEATS);
+if (have && !process.argv.includes('--force')) {
   console.log(`Сэмплы уже на месте: ${DEST} (перекачать: npm run samples -- --force)`);
   process.exit(0);
 }
 
+// npm run samples -- --zip <путь> — взять уже скачанный архив вместо загрузки.
+const zipArg = process.argv.indexOf('--zip');
+const localZip = zipArg > 0 ? process.argv[zipArg + 1] : null;
 const tmp = mkdtempSync(join(tmpdir(), 'padwork-samples-'));
-const zip = join(tmp, 'pack.zip');
+const zip = localZip ?? join(tmp, 'pack.zip');
 try {
-  console.log(`Скачиваю пак (≈250 МБ) со страницы ${PAGE} …`);
-  const res = await fetch(URL);
-  if (!res.ok || !res.body) throw new Error(`Не удалось скачать: HTTP ${res.status}`);
-  await pipeline(Readable.fromWeb(res.body), createWriteStream(zip));
+  if (!localZip) {
+    console.log(`Скачиваю пак (≈250 МБ) со страницы ${PAGE} …`);
+    const res = await fetch(URL);
+    if (!res.ok || !res.body) throw new Error(`Не удалось скачать: HTTP ${res.status}`);
+    await pipeline(Readable.fromWeb(res.body), createWriteStream(zip));
+  }
 
   console.log('Распаковываю…');
   const out = join(tmp, 'pack');
@@ -38,14 +49,22 @@ try {
 
   const hits = findDir(out, 'Drum Hits');
   if (!hits) throw new Error('В архиве не найдена папка «Drum Hits» — возможно, состав пака изменился.');
-  mkdirSync(DEST, { recursive: true });
+  mkdirSync(BEATS, { recursive: true });
   let n = 0;
-  for (const f of readdirSync(hits)) {
-    if (WANT.test(f)) {
-      copyFileSync(join(hits, f), join(DEST, f));
-      n++;
+  const copy = (dir, test, dest) => {
+    if (!dir) return;
+    for (const f of readdirSync(dir)) {
+      if (test.test(f)) {
+        copyFileSync(join(dir, f), join(dest, f));
+        n++;
+      }
     }
-  }
+  };
+  copy(hits, WANT, DEST);
+  const beats = findDir(out, 'Beats');
+  copy(beats, WANT_BEATS, BEATS);
+  copy(beats, WANT_ROLLS, DEST);
+  copy(findDir(out, 'FX'), WANT_FX, DEST);
   console.log(`Готово: ${n} файлов в ${DEST}. Перезагрузи страницу приложения.`);
 } finally {
   rmSync(tmp, { recursive: true, force: true });

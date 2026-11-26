@@ -51,6 +51,7 @@ if files:
             'hats': {'gain': 0.6, 'files': cat(r' Hat ')},
             'cymbals': {'gain': 0.55, 'files': cat(r' Cymbal ')},
             'perc': {'gain': 0.75, 'files': cat(r' (Perc|Tamb) ')},
+            'fx': {'gain': 0.7, 'files': cat(r'^(Jungle FX|Roll |Stab|Sub Drop)')},
         },
         'sounds': {
             'kick': 'kicks', 'snare': 'snares', 'hat': 'hats', 'openhat': 'hats',
@@ -118,5 +119,28 @@ index += [
     {'id': 'dnb', 'name': 'Студийный DnB-кит (fingerdrum.io)', 'kind': 'oneshot'},
     {'id': 'amen', 'name': 'Amen break (слайсы)', 'kind': 'slices'},
 ]
+
+# --- брейки SampleRadar: каждый луп — кит из 16 слайсов (первые два такта восьмыми)
+BEATS = f'{K}/sampleradar/beats'
+if os.path.isdir(BEATS):
+    import wave
+    for fn in sorted(os.listdir(BEATS)):
+        m = re.match(r'(.+) (\d+) \((\d+)BPM\)\.wav$', fn)
+        if not m:
+            continue
+        title, num, bpm = m.group(1), m.group(2), int(m.group(3))
+        with wave.open(f'{BEATS}/{fn}') as w:
+            bars = max(1, round(w.getnframes() / w.getframerate() * bpm / 240))
+        kit_id = 'sr-beat-' + re.sub(r'[^a-z0-9]+', '-', f'{title} {num}'.lower())
+        name = f'Брейк: {title} {num} ({bpm} BPM)'
+        index.append({
+            'id': kit_id, 'name': name, 'kind': 'slices', 'requires': 'sampleradar',
+            'manifest': {'id': kit_id, 'name': name, 'type': 'slices', 'file': f'../sampleradar/beats/{fn}',
+                         'bars': bars, 'slicesPerBar': 8, 'pick': list(range(16))},
+        })
+else:
+    # сэмплы не скачаны — сохраняем уже описанные брейки из прежнего index.json
+    with open(f'{K}/index.json', encoding='utf-8') as f:
+        index += [k for k in json.load(f) if k['id'].startswith('sr-beat-')]
 dump(index, f'{K}/index.json')
 print('kits:', [k['id'] for k in index])
